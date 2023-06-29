@@ -1,0 +1,19 @@
+[package]
+name = "verification_officer"
+description = "Discord bot for handling the verification of members that join the ÜNOG Discord server"
+repository = "https://github.com/unoghub/VerificationOfficer"
+keywords = ["discord"]
+categories = ["http_client"]
+license = "MIT"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sparkle-convenience = "0.16.0-rc.1"
+twilight-http = "0.15"
+twilight-gateway = "0.15"
+twilight-model = "0.15"
+tokio = { version = "1.28", features = ["rt-multi-thread", "macros"] }
+futures = "0.3"
+anyhow = { version = "1.0", features = ["backtrace"] }
+dotenvy = "0.15"
