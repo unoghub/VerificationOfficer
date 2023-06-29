@@ -87,7 +87,11 @@
     // must_not_suspend,
     // non_exhaustive_omitted_patterns,
 )]
-#![allow(clippy::redundant_pub_crate, clippy::multiple_crate_versions)]
+#![allow(
+    clippy::redundant_pub_crate,
+    clippy::multiple_crate_versions,
+    clippy::large_futures
+)]
 
 mod command;
 mod interaction;
@@ -95,20 +99,25 @@ mod interaction;
 use std::{env, ops::ControlFlow, sync::Arc};
 
 use futures::StreamExt;
-use sparkle_convenience::Bot;
+use sparkle_convenience::{reply::Reply, Bot};
 use twilight_gateway::EventTypeFlags;
 use twilight_http as _;
 use twilight_model::{
-    gateway::Intents,
+    application::interaction::Interaction,
+    gateway::{event::Event, Intents},
     id::{marker::GuildMarker, Id},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error)]
 enum Error {
     #[error("unknown command: {0}")]
     UnknownCommand(String),
     #[error("please give a channel id after the command")]
     CreateVerificationMessageMissingChannelId,
+    #[error("unknown interaction: {0:#?}")]
+    UnknownEvent(Event),
+    #[error("unknown interaction: {0:#?}")]
+    UnknownInteraction(Interaction),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -120,6 +129,15 @@ struct Config {
 struct Context {
     bot: Bot,
     _config: Config,
+}
+
+impl Context {
+    async fn handle_event(&self, event: Event) -> Result<(), anyhow::Error> {
+        match event {
+            Event::InteractionCreate(interaction) => self.handle_interaction(interaction.0).await,
+            _ => Err(Error::UnknownEvent(event).into()),
+        }
+    }
 }
 
 #[tokio::main]
@@ -149,12 +167,22 @@ async fn main() -> Result<(), anyhow::Error> {
     };
 
     let mut events = shards.events();
-    while let Some((_, event)) = events.next().await {
-        match event {
-            Ok(_event) => {}
+    while let Some((_, event_res)) = events.next().await {
+        let ctx_ref = Arc::clone(&ctx);
+        match event_res {
+            Ok(event) => {
+                tokio::spawn(async move {
+                    if let Err(err) = ctx_ref.handle_event(event).await {
+                        eprintln!("{err:?}");
+                        if let Err(log_err) = ctx_ref.bot.log(&err.to_string()).await {
+                            eprintln!("{log_err:?}");
+                        }
+                    }
+                });
+            }
             Err(err) => {
-                eprintln!("{err}");
-                ctx.bot.log(&err.to_string()).await?;
+                eprintln!("{err:?}");
+                ctx_ref.bot.log(&err.to_string()).await?;
 
                 if err.is_fatal() {
                     break;
@@ -164,4 +192,11 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     Ok(())
+}
+
+fn err_reply() -> Reply {
+    Reply::new().content(
+        "Something went wrong, I reported the error to the developers, hopefully it'll be fixed \
+         soon. Sorry about the inconvenience.",
+    )
 }
