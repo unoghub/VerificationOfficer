@@ -31,3 +31,14 @@ These are one-off operations, start the executable without a command to run the 
     - Required permissions in `channel_id`:
         - View Channel
         - Send Messages
+
+## Compilation
+
+> On Linux, make sure you have `build-essential` installed
+
+> On Windows, MSVC is required, Rust installer will direct you to this
+
+1. [Install Rust](https://www.rust-lang.org/tools/install)
+2. Clone this repository and `cd` into it
+3. Run `cargo build --release`
+4. The executable is at `target/release/verification_officer`
