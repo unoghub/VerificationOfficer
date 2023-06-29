@@ -105,7 +105,7 @@ use twilight_http as _;
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event, Intents},
-    id::{marker::GuildMarker, Id},
+    id::{marker::ChannelMarker, Id},
 };
 
 #[derive(Clone, Debug, thiserror::Error)]
@@ -122,13 +122,13 @@ enum Error {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct Config {
-    guild_id: Id<GuildMarker>,
+    verification_submissions_channel_id: Id<ChannelMarker>,
 }
 
 #[derive(Debug)]
 struct Context {
     bot: Bot,
-    _config: Config,
+    config: Config,
 }
 
 impl Context {
@@ -145,7 +145,8 @@ async fn main() -> Result<(), anyhow::Error> {
     dotenvy::dotenv()?;
 
     let config = Config {
-        guild_id: env::var("GUILD_ID")?.parse()?,
+        verification_submissions_channel_id: env::var("VERIFICATION_SUBMISSIONS_CHANNEL_ID")?
+            .parse()?,
     };
 
     let (mut bot, mut shards) = Bot::new(
@@ -157,10 +158,7 @@ async fn main() -> Result<(), anyhow::Error> {
     bot.set_logging_channel(env::var("LOGGING_CHANNEL_ID")?.parse()?)
         .await?;
 
-    let ctx = Arc::new(Context {
-        bot,
-        _config: config,
-    });
+    let ctx = Arc::new(Context { bot, config });
 
     if ctx.handle_command().await? == ControlFlow::Break(()) {
         return Ok(());
@@ -174,7 +172,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 tokio::spawn(async move {
                     if let Err(err) = ctx_ref.handle_event(event).await {
                         eprintln!("{err:?}");
-                        if let Err(log_err) = ctx_ref.bot.log(&err.to_string()).await {
+                        if let Err(log_err) = ctx_ref.bot.log(&format!("{err:?}")).await {
                             eprintln!("{log_err:?}");
                         }
                     }
@@ -182,7 +180,7 @@ async fn main() -> Result<(), anyhow::Error> {
             }
             Err(err) => {
                 eprintln!("{err:?}");
-                ctx_ref.bot.log(&err.to_string()).await?;
+                ctx_ref.bot.log(&format!("{err:?}")).await?;
 
                 if err.is_fatal() {
                     break;
@@ -195,8 +193,10 @@ async fn main() -> Result<(), anyhow::Error> {
 }
 
 fn err_reply() -> Reply {
-    Reply::new().content(
-        "Something went wrong, I reported the error to the developers, hopefully it'll be fixed \
-         soon. Sorry about the inconvenience.",
-    )
+    Reply::new()
+        .content(
+            "Something went wrong, I reported the error to the developers, hopefully it'll be \
+             fixed soon. Sorry about the inconvenience.",
+        )
+        .ephemeral()
 }

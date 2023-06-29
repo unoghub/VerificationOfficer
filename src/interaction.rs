@@ -10,7 +10,7 @@ pub mod verification;
 
 #[derive(Debug)]
 struct InteractionContext<'ctx> {
-    _ctx: &'ctx Context,
+    ctx: &'ctx Context,
     handle: InteractionHandle<'ctx>,
     interaction: Interaction,
 }
@@ -18,7 +18,8 @@ struct InteractionContext<'ctx> {
 impl InteractionContext<'_> {
     async fn handle(self) -> Result<(), anyhow::Error> {
         match self.interaction.name().ok()? {
-            verification::MODAL_OPEN_ID => self.verification_modal_open().await,
+            verification::MODAL_OPEN_ID => self.open_verification_modal().await,
+            verification::MODAL_SUBMIT_ID => self.handle_verification_modal_submit().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         }
     }
@@ -28,7 +29,7 @@ impl Context {
     pub async fn handle_interaction(&self, interaction: Interaction) -> Result<(), anyhow::Error> {
         let handle = self.bot.interaction_handle(&interaction);
         let ctx = InteractionContext {
-            _ctx: self,
+            ctx: self,
             handle: handle.clone(),
             interaction,
         };

@@ -41,7 +41,7 @@ impl Context {
         self.bot
             .http
             .create_message(channel_id)
-            .content("Please click the button below to open the verification form")?
+            .content("Please click the button below to open the verification form:")?
             .components(&[Component::ActionRow(ActionRow {
                 components: vec![Component::Button(Button {
                     custom_id: Some(interaction::verification::MODAL_OPEN_ID.to_owned()),
