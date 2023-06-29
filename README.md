@@ -27,6 +27,8 @@ Commands follow the format of `{path_to_exec} {command} {args}`, for example:
 
 These are one-off operations, start the executable without a command to run the bot
 
+Permissions listed as required under the commands aren't required after the command has run
+
 - `create_verification_message {channel_id}`: Sends the verification message in the given channel ID
     - Required permissions in `channel_id`:
         - View Channel
