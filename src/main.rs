@@ -71,7 +71,6 @@
     single_use_lifetimes,
     trivial_casts,
     trivial_numeric_casts,
-    unreachable_pub,
     unsafe_code,
     unsafe_op_in_unsafe_fn,
     unused_crate_dependencies,
@@ -90,7 +89,10 @@
 )]
 #![allow(clippy::redundant_pub_crate, clippy::multiple_crate_versions)]
 
-use std::{env, sync::Arc};
+mod command;
+mod interaction;
+
+use std::{env, ops::ControlFlow, sync::Arc};
 
 use futures::StreamExt;
 use sparkle_convenience::Bot;
@@ -100,6 +102,14 @@ use twilight_model::{
     gateway::Intents,
     id::{marker::GuildMarker, Id},
 };
+
+#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+enum Error {
+    #[error("unknown command: {0}")]
+    UnknownCommand(String),
+    #[error("please give a channel id after the command")]
+    CreateVerificationMessageMissingChannelId,
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct Config {
@@ -133,6 +143,10 @@ async fn main() -> Result<(), anyhow::Error> {
         bot,
         _config: config,
     });
+
+    if ctx.handle_command().await? == ControlFlow::Break(()) {
+        return Ok(());
+    };
 
     let mut events = shards.events();
     while let Some((_, event)) = events.next().await {

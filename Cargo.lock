@@ -896,6 +896,7 @@ version = "0.16.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb7a58f8a6a4ebe33853f1a7ecff16ada1166ea366dabf76088f6a3751b32326"
 dependencies = [
+ "anyhow",
  "serde",
  "thiserror",
  "titlecase",
@@ -1281,6 +1282,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "sparkle-convenience",
+ "thiserror",
  "tokio",
  "twilight-gateway",
  "twilight-http",
