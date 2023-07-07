@@ -138,4 +138,37 @@ impl Context<'_> {
 
         Ok(())
     }
+
+    pub async fn approve(self) -> Result<(), anyhow::Error> {
+        let approve_user_mention = self
+            .0
+            .interaction
+            .message
+            .ok()?
+            .embeds
+            .into_iter()
+            .next()
+            .ok()?
+            .fields
+            .into_iter()
+            .next()
+            .ok()?
+            .value;
+
+        self.0
+            .ctx
+            .bot
+            .reply_handle(
+                &Reply::new().content(format!("{approve_user_mention}, you are verified now!",)),
+            )
+            .create_message(self.0.ctx.config.verification_approvals_channel_id)
+            .await?;
+
+        self.0
+            .handle
+            .reply(Reply::new().content(format!("Verified {approve_user_mention}")))
+            .await?;
+
+        Ok(())
+    }
 }

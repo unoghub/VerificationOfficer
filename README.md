@@ -11,12 +11,13 @@ Configuration is done using environment variables, `.env` files are supported
 - `BOT_TOKEN`: The bot's token as shown in Discord Developer Portal
 - `LOGGING_CHANNEL_ID`: ID of the channel where the errors will be logged
 - `VERIFICATION_SUBMISSIONS_CHANNEL_ID`: ID of the channel where the verification submissions will be sent
+- `VERIFICATION_APPROVALS_CHANNEL_ID`: ID of the channel where the users will be informed that the verification was approved
 
 ### Required permissions
 
 - In `LOGGING_CHANNEL_ID`:
     - Manage Webhooks
-- In `VERIFICATION_SUBMISSIONS_CHANNEL_ID`:
+- In `VERIFICATION_SUBMISSIONS_CHANNEL_ID` and `VERIFICATION_APPROVALS_CHANNEL_ID`:
     - View Channel
     - Send Messages
 

@@ -122,6 +122,7 @@ enum Error {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct Config {
     verification_submissions_channel_id: Id<ChannelMarker>,
+    verification_approvals_channel_id: Id<ChannelMarker>,
 }
 
 #[derive(Debug)]
@@ -153,6 +154,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let config = Config {
         verification_submissions_channel_id: env::var("VERIFICATION_SUBMISSIONS_CHANNEL_ID")?
+            .parse()?,
+        verification_approvals_channel_id: env::var("VERIFICATION_APPROVALS_CHANNEL_ID")?
             .parse()?,
     };
 
