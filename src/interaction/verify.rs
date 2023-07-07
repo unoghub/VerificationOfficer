@@ -7,7 +7,7 @@ use twilight_model::channel::message::{
 };
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
-use crate::interaction;
+use crate::{interaction, CustomError};
 
 pub const MODAL_ID: &str = "verify_modal";
 pub const MODAL_OPEN_ID: &str = "verify_modal_open";
@@ -80,6 +80,10 @@ impl Context<'_> {
                     .map(|component| component.value.ok())
             });
 
+        let name = name_sanitized(&modal_values.next().ok()???, &modal_values.next().ok()???)?;
+        twilight_validate::request::nickname(&name)
+            .map_err(|_| CustomError::InvalidName(name.clone()))?;
+
         self.0
             .ctx
             .bot
@@ -89,13 +93,7 @@ impl Context<'_> {
                         EmbedBuilder::new()
                             .title("Verification Submission")
                             .field(EmbedFieldBuilder::new("User", format!("<@{author_id}>")))
-                            .field(EmbedFieldBuilder::new(
-                                "Name and surname",
-                                name_sanitized(
-                                    &modal_values.next().ok()???,
-                                    &modal_values.next().ok()???,
-                                )?,
-                            ))
+                            .field(EmbedFieldBuilder::new("Name and surname", name))
                             .field(EmbedFieldBuilder::new(
                                 "Details",
                                 modal_values.next().ok()???,
@@ -144,23 +142,29 @@ impl Context<'_> {
     pub async fn approve(self) -> Result<(), anyhow::Error> {
         let message = self.0.interaction.message.ok()?;
 
-        let approve_user_mention = message
-            .embeds
-            .into_iter()
-            .next()
-            .ok()?
-            .fields
-            .into_iter()
-            .next()
-            .ok()?
-            .value;
+        let mut embed_fields = message.embeds.into_iter().next().ok()?.fields.into_iter();
+        let user_mention = embed_fields.next().ok()?.value;
 
         self.0
             .ctx
             .bot
-            .reply_handle(
-                &Reply::new().content(format!("{approve_user_mention}, you are verified now!",)),
+            .http
+            .update_guild_member(
+                self.0.interaction.guild_id.ok()?,
+                user_mention
+                    .strip_prefix("<@")
+                    .ok()?
+                    .strip_suffix('>')
+                    .ok()?
+                    .parse()?,
             )
+            .nick(Some(&embed_fields.next().ok()?.value))?
+            .await?;
+
+        self.0
+            .ctx
+            .bot
+            .reply_handle(&Reply::new().content(format!("{user_mention}, you are verified now!",)))
             .create_message(self.0.ctx.config.verification_approvals_channel_id)
             .await?;
 
@@ -168,7 +172,7 @@ impl Context<'_> {
             .handle
             .reply(
                 Reply::new()
-                    .content(format!("Verified {approve_user_mention}"))
+                    .content(format!("Verified {user_mention}"))
                     .update_last(),
             )
             .await?;
@@ -195,6 +199,8 @@ fn name_sanitized(name: &str, surname: &str) -> Result<String, anyhow::Error> {
         }
     }
 
+    sanitized.pop(); // remove last space
+
     Ok(sanitized)
 }
 
@@ -202,10 +208,11 @@ fn name_sanitized(name: &str, surname: &str) -> Result<String, anyhow::Error> {
 mod tests {
     #[test]
     fn name_sanitized() -> Result<(), anyhow::Error> {
-        assert_eq!(super::name_sanitized("aaa bBb", "ccc")?, "Aaa Bbb Ccc ");
-        assert_eq!(super::name_sanitized("a", "B")?, "A B ");
-        assert_eq!(super::name_sanitized("iiı", "İiı")?, "İiı İiı ");
-        assert_eq!(super::name_sanitized("ıiı", "Iiı")?, "Iiı Iiı ");
+        assert_eq!(super::name_sanitized("aaa bBb", "ccc")?, "Aaa Bbb Ccc");
+        assert_eq!(super::name_sanitized("a", "B")?, "A B");
+        assert_eq!(super::name_sanitized("a  b", " c ")?, "A B C");
+        assert_eq!(super::name_sanitized("iiı", "İiı")?, "İiı İiı");
+        assert_eq!(super::name_sanitized("ıiı", "Iiı")?, "Iiı Iiı");
 
         Ok(())
     }

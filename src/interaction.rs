@@ -1,5 +1,5 @@
 use sparkle_convenience::{
-    error::{IntoError, NoCustomError, UserError},
+    error::{IntoError, UserError},
     interaction::{extract::InteractionExt, InteractionHandle},
 };
 use twilight_model::application::interaction::Interaction;
@@ -25,10 +25,15 @@ impl Context<'_> {
             verify::APPROVE_ID => verify::Context(self).approve().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         } {
+            let user_error = UserError::from_anyhow_err(&err);
+            let is_internal = user_error == UserError::Internal;
             err_handle
-                .report_error::<NoCustomError>(err_reply(), UserError::Internal)
+                .report_error(err_reply(&user_error), user_error)
                 .await?;
-            return Err(err);
+
+            if is_internal {
+                return Err(err);
+            }
         }
 
         Ok(())
