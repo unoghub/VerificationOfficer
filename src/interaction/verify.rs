@@ -140,11 +140,9 @@ impl Context<'_> {
     }
 
     pub async fn approve(self) -> Result<(), anyhow::Error> {
-        let approve_user_mention = self
-            .0
-            .interaction
-            .message
-            .ok()?
+        let message = self.0.interaction.message.ok()?;
+
+        let approve_user_mention = message
             .embeds
             .into_iter()
             .next()
@@ -166,7 +164,11 @@ impl Context<'_> {
 
         self.0
             .handle
-            .reply(Reply::new().content(format!("Verified {approve_user_mention}")))
+            .reply(
+                Reply::new()
+                    .content(format!("Verified {approve_user_mention}"))
+                    .update_last(),
+            )
             .await?;
 
         Ok(())
