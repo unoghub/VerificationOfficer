@@ -20,8 +20,8 @@ impl Context<'_> {
         let err_handle = self.handle.clone();
 
         if let Err(err) = match self.interaction.name().ok()? {
-            verify::modal::OPEN_ID => verify::modal::Context(self).open().await,
-            verify::modal::ID => verify::modal::Context(self).submit().await,
+            verify::MODAL_OPEN_ID => verify::Context(self).modal_open().await,
+            verify::MODAL_ID => verify::Context(self).modal_submit().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         } {
             err_handle
