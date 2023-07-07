@@ -47,7 +47,7 @@ impl Context<'_> {
             .content("Please click the button below to open the verification form:")?
             .components(&[Component::ActionRow(ActionRow {
                 components: vec![Component::Button(Button {
-                    custom_id: Some(interaction::modal::OPEN_ID.to_owned()),
+                    custom_id: Some(interaction::verify::modal::OPEN_ID.to_owned()),
                     label: Some("Verify".to_owned()),
                     style: ButtonStyle::Primary,
                     disabled: false,

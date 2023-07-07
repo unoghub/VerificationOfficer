@@ -6,7 +6,7 @@ use twilight_model::application::interaction::Interaction;
 
 use crate::{err_reply, Error};
 
-pub mod modal;
+pub mod verify;
 
 #[derive(Debug)]
 pub struct Context<'ctx> {
@@ -20,8 +20,8 @@ impl Context<'_> {
         let err_handle = self.handle.clone();
 
         if let Err(err) = match self.interaction.name().ok()? {
-            modal::OPEN_ID => modal::Context(self).open().await,
-            modal::SUBMIT_ID => modal::Context(self).submit().await,
+            verify::modal::OPEN_ID => verify::modal::Context(self).open().await,
+            verify::modal::SUBMIT_ID => verify::modal::Context(self).submit().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         } {
             err_handle
