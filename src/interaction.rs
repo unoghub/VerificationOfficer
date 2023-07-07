@@ -21,7 +21,7 @@ impl Context<'_> {
 
         if let Err(err) = match self.interaction.name().ok()? {
             verify::modal::OPEN_ID => verify::modal::Context(self).open().await,
-            verify::modal::SUBMIT_ID => verify::modal::Context(self).submit().await,
+            verify::modal::ID => verify::modal::Context(self).submit().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         } {
             err_handle

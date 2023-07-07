@@ -6,8 +6,8 @@ use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::interaction;
 
-pub const OPEN_ID: &str = "verification_modal_open";
-pub const SUBMIT_ID: &str = "verification_modal_submit";
+pub const ID: &str = "verify_modal";
+pub const OPEN_ID: &str = "verify_modal_open";
 
 pub struct Context<'a>(pub interaction::Context<'a>);
 
@@ -16,7 +16,7 @@ impl Context<'_> {
         self.0
             .handle
             .modal(
-                "verification_modal_submit",
+                ID,
                 "Verification",
                 vec![
                     TextInput {
