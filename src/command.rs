@@ -8,10 +8,12 @@ use twilight_model::{
     id::{marker::ChannelMarker, Id},
 };
 
-use crate::{interaction, Context, Error};
+use crate::{interaction, Error};
 
-impl Context {
-    pub async fn handle_command(&self) -> Result<ControlFlow<()>, anyhow::Error> {
+pub struct Context<'a>(pub &'a crate::Context);
+
+impl Context<'_> {
+    pub async fn handle(&self) -> Result<ControlFlow<()>, anyhow::Error> {
         let mut args = env::args().collect::<Vec<_>>().into_iter();
         args.next();
 
@@ -38,13 +40,14 @@ impl Context {
         &self,
         channel_id: Id<ChannelMarker>,
     ) -> Result<(), anyhow::Error> {
-        self.bot
+        self.0
+            .bot
             .http
             .create_message(channel_id)
             .content("Please click the button below to open the verification form:")?
             .components(&[Component::ActionRow(ActionRow {
                 components: vec![Component::Button(Button {
-                    custom_id: Some(interaction::verification::MODAL_OPEN_ID.to_owned()),
+                    custom_id: Some(interaction::modal::OPEN_ID.to_owned()),
                     label: Some("Verify".to_owned()),
                     style: ButtonStyle::Primary,
                     disabled: false,

@@ -4,38 +4,27 @@ use sparkle_convenience::{
 };
 use twilight_model::application::interaction::Interaction;
 
-use crate::{err_reply, Context, Error};
+use crate::{err_reply, Error};
 
-pub mod verification;
+pub mod modal;
 
 #[derive(Debug)]
-struct InteractionContext<'ctx> {
-    ctx: &'ctx Context,
-    handle: InteractionHandle<'ctx>,
-    interaction: Interaction,
+pub struct Context<'ctx> {
+    pub ctx: &'ctx crate::Context,
+    pub handle: InteractionHandle<'ctx>,
+    pub interaction: Interaction,
 }
 
-impl InteractionContext<'_> {
-    async fn handle(self) -> Result<(), anyhow::Error> {
-        match self.interaction.name().ok()? {
-            verification::MODAL_OPEN_ID => self.open_verification_modal().await,
-            verification::MODAL_SUBMIT_ID => self.handle_verification_modal_submit().await,
+impl Context<'_> {
+    pub async fn handle(self) -> Result<(), anyhow::Error> {
+        let err_handle = self.handle.clone();
+
+        if let Err(err) = match self.interaction.name().ok()? {
+            modal::OPEN_ID => modal::Context(self).open().await,
+            modal::SUBMIT_ID => modal::Context(self).submit().await,
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
-        }
-    }
-}
-
-impl Context {
-    pub async fn handle_interaction(&self, interaction: Interaction) -> Result<(), anyhow::Error> {
-        let handle = self.bot.interaction_handle(&interaction);
-        let ctx = InteractionContext {
-            ctx: self,
-            handle: handle.clone(),
-            interaction,
-        };
-
-        if let Err(err) = ctx.handle().await {
-            handle
+        } {
+            err_handle
                 .report_error::<NoCustomError>(err_reply(), UserError::Internal)
                 .await?;
             return Err(err);

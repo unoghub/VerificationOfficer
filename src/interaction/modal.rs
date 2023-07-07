@@ -4,14 +4,17 @@ use sparkle_convenience::{
 use twilight_model::channel::message::component::{TextInput, TextInputStyle};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
-use crate::interaction::InteractionContext;
+use crate::interaction;
 
-pub const MODAL_OPEN_ID: &str = "verification_modal_open";
-pub const MODAL_SUBMIT_ID: &str = "verification_modal_submit";
+pub const OPEN_ID: &str = "verification_modal_open";
+pub const SUBMIT_ID: &str = "verification_modal_submit";
 
-impl InteractionContext<'_> {
-    pub async fn open_verification_modal(&self) -> Result<(), anyhow::Error> {
-        self.handle
+pub struct Context<'a>(pub interaction::Context<'a>);
+
+impl Context<'_> {
+    pub async fn open(self) -> Result<(), anyhow::Error> {
+        self.0
+            .handle
             .modal(
                 "verification_modal_submit",
                 "Verification",
@@ -53,9 +56,10 @@ impl InteractionContext<'_> {
         Ok(())
     }
 
-    pub async fn handle_verification_modal_submit(self) -> Result<(), anyhow::Error> {
-        let author_id = self.interaction.author_id().ok()?;
+    pub async fn submit(self) -> Result<(), anyhow::Error> {
+        let author_id = self.0.interaction.author_id().ok()?;
         let mut modal_values = self
+            .0
             .interaction
             .data
             .ok()?
@@ -71,7 +75,8 @@ impl InteractionContext<'_> {
                     .map(|component| component.value.ok())
             });
 
-        self.ctx
+        self.0
+            .ctx
             .bot
             .reply_handle(
                 &Reply::new().embed(
@@ -90,10 +95,11 @@ impl InteractionContext<'_> {
                         .build(),
                 ),
             )
-            .create_message(self.ctx.config.verification_submissions_channel_id)
+            .create_message(self.0.ctx.config.verification_submissions_channel_id)
             .await?;
 
-        self.handle
+        self.0
+            .handle
             .reply(
                 Reply::new()
                     .content(

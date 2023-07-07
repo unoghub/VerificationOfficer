@@ -37,7 +37,6 @@
     clippy::shadow_reuse,
     clippy::shadow_same,
     clippy::shadow_unrelated,
-    clippy::single_char_lifetime_names,
     clippy::str_to_string,
     clippy::string_add,
     clippy::string_slice,
@@ -126,7 +125,7 @@ struct Config {
 }
 
 #[derive(Debug)]
-struct Context {
+pub struct Context {
     bot: Bot,
     config: Config,
 }
@@ -134,7 +133,15 @@ struct Context {
 impl Context {
     async fn handle_event(&self, event: Event) -> Result<(), anyhow::Error> {
         match event {
-            Event::InteractionCreate(interaction) => self.handle_interaction(interaction.0).await,
+            Event::InteractionCreate(interaction) => {
+                interaction::Context {
+                    ctx: self,
+                    handle: self.bot.interaction_handle(&interaction.0),
+                    interaction: interaction.0,
+                }
+                .handle()
+                .await
+            }
             _ => Err(Error::UnknownEvent(event).into()),
         }
     }
@@ -160,14 +167,14 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let ctx = Arc::new(Context { bot, config });
 
-    if ctx.handle_command().await? == ControlFlow::Break(()) {
+    if command::Context(&ctx).handle().await? == ControlFlow::Break(()) {
         return Ok(());
     };
 
     let mut events = shards.events();
-    while let Some((_, event_res)) = events.next().await {
+    while let Some((_, res)) = events.next().await {
         let ctx_ref = Arc::clone(&ctx);
-        match event_res {
+        match res {
             Ok(event) => {
                 tokio::spawn(async move {
                     if let Err(err) = ctx_ref.handle_event(event).await {
