@@ -1,13 +1,18 @@
 use sparkle_convenience::{
     error::IntoError, interaction::extract::InteractionDataExt, reply::Reply,
 };
-use twilight_model::channel::message::component::{TextInput, TextInputStyle};
+use twilight_model::channel::message::{
+    component::{ActionRow, Button, ButtonStyle, TextInput, TextInputStyle},
+    Component,
+};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::interaction;
 
 pub const MODAL_ID: &str = "verify_modal";
 pub const MODAL_OPEN_ID: &str = "verify_modal_open";
+pub const APPROVE_ID: &str = "verify_approve";
+pub const REJECT_ID: &str = "verify_reject";
 
 pub struct Context<'a>(pub interaction::Context<'a>);
 
@@ -79,21 +84,42 @@ impl Context<'_> {
             .ctx
             .bot
             .reply_handle(
-                &Reply::new().embed(
-                    EmbedBuilder::new()
-                        .title("Verification Submission")
-                        .field(EmbedFieldBuilder::new("User", format!("<@{author_id}>")))
-                        .field(EmbedFieldBuilder::new("Name", modal_values.next().ok()???))
-                        .field(EmbedFieldBuilder::new(
-                            "Surname",
-                            modal_values.next().ok()???,
-                        ))
-                        .field(EmbedFieldBuilder::new(
-                            "Details",
-                            modal_values.next().ok()???,
-                        ))
-                        .build(),
-                ),
+                &Reply::new()
+                    .embed(
+                        EmbedBuilder::new()
+                            .title("Verification Submission")
+                            .field(EmbedFieldBuilder::new("User", format!("<@{author_id}>")))
+                            .field(EmbedFieldBuilder::new("Name", modal_values.next().ok()???))
+                            .field(EmbedFieldBuilder::new(
+                                "Surname",
+                                modal_values.next().ok()???,
+                            ))
+                            .field(EmbedFieldBuilder::new(
+                                "Details",
+                                modal_values.next().ok()???,
+                            ))
+                            .build(),
+                    )
+                    .component(Component::ActionRow(ActionRow {
+                        components: vec![
+                            Component::Button(Button {
+                                custom_id: Some(APPROVE_ID.to_owned()),
+                                label: Some("Approve".to_owned()),
+                                style: ButtonStyle::Success,
+                                disabled: false,
+                                emoji: None,
+                                url: None,
+                            }),
+                            Component::Button(Button {
+                                custom_id: Some(REJECT_ID.to_owned()),
+                                label: Some("Reject".to_owned()),
+                                style: ButtonStyle::Danger,
+                                disabled: false,
+                                emoji: None,
+                                url: None,
+                            }),
+                        ],
+                    })),
             )
             .create_message(self.0.ctx.config.verification_submissions_channel_id)
             .await?;
