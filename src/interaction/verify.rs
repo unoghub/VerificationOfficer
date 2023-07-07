@@ -28,9 +28,9 @@ impl Context<'_> {
                         custom_id: "name".to_owned(),
                         label: "Name".to_owned(),
                         style: TextInputStyle::Short,
+                        min_length: Some(1),
                         required: None,
                         max_length: None,
-                        min_length: None,
                         placeholder: None,
                         value: None,
                     },
@@ -38,9 +38,9 @@ impl Context<'_> {
                         custom_id: "surname".to_owned(),
                         label: "Surname".to_owned(),
                         style: TextInputStyle::Short,
+                        min_length: Some(1),
                         required: None,
                         max_length: None,
-                        min_length: None,
                         placeholder: None,
                         value: None,
                     },
@@ -89,10 +89,12 @@ impl Context<'_> {
                         EmbedBuilder::new()
                             .title("Verification Submission")
                             .field(EmbedFieldBuilder::new("User", format!("<@{author_id}>")))
-                            .field(EmbedFieldBuilder::new("Name", modal_values.next().ok()???))
                             .field(EmbedFieldBuilder::new(
-                                "Surname",
-                                modal_values.next().ok()???,
+                                "Name and surname",
+                                name_sanitized(
+                                    &modal_values.next().ok()???,
+                                    &modal_values.next().ok()???,
+                                )?,
                             ))
                             .field(EmbedFieldBuilder::new(
                                 "Details",
@@ -170,6 +172,40 @@ impl Context<'_> {
                     .update_last(),
             )
             .await?;
+
+        Ok(())
+    }
+}
+
+fn name_sanitized(name: &str, surname: &str) -> Result<String, anyhow::Error> {
+    let mut sanitized = String::with_capacity(name.len());
+
+    for s in [name, surname] {
+        for word in s.split_ascii_whitespace() {
+            let mut chars = word.chars();
+
+            sanitized.push(match chars.next().ok()? {
+                'i' => 'İ',
+                'ı' => 'I',
+                char => char.to_ascii_uppercase(),
+            });
+
+            sanitized.push_str(&chars.as_str().to_lowercase());
+            sanitized.push(' ');
+        }
+    }
+
+    Ok(sanitized)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn name_sanitized() -> Result<(), anyhow::Error> {
+        assert_eq!(super::name_sanitized("aaa bBb", "ccc")?, "Aaa Bbb Ccc ");
+        assert_eq!(super::name_sanitized("a", "B")?, "A B ");
+        assert_eq!(super::name_sanitized("iiı", "İiı")?, "İiı İiı ");
+        assert_eq!(super::name_sanitized("ıiı", "Iiı")?, "Iiı Iiı ");
 
         Ok(())
     }
