@@ -12,7 +12,6 @@ use crate::{interaction, CustomError};
 pub const MODAL_ID: &str = "verify_modal";
 pub const MODAL_OPEN_ID: &str = "verify_modal_open";
 pub const APPROVE_ID: &str = "verify_approve";
-pub const REJECT_ID: &str = "verify_reject";
 
 pub struct Context<'a>(pub interaction::Context<'a>);
 
@@ -101,24 +100,14 @@ impl Context<'_> {
                             .build(),
                     )
                     .component(Component::ActionRow(ActionRow {
-                        components: vec![
-                            Component::Button(Button {
-                                custom_id: Some(APPROVE_ID.to_owned()),
-                                label: Some("Approve".to_owned()),
-                                style: ButtonStyle::Success,
-                                disabled: false,
-                                emoji: None,
-                                url: None,
-                            }),
-                            Component::Button(Button {
-                                custom_id: Some(REJECT_ID.to_owned()),
-                                label: Some("Reject".to_owned()),
-                                style: ButtonStyle::Danger,
-                                disabled: false,
-                                emoji: None,
-                                url: None,
-                            }),
-                        ],
+                        components: vec![Component::Button(Button {
+                            custom_id: Some(APPROVE_ID.to_owned()),
+                            label: Some("Approve".to_owned()),
+                            style: ButtonStyle::Success,
+                            disabled: false,
+                            emoji: None,
+                            url: None,
+                        })],
                     })),
             )
             .create_message(self.0.ctx.config.verification_submissions_channel_id)
