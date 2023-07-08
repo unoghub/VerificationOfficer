@@ -194,6 +194,15 @@ impl Context<'_> {
             .await?;
 
         self.0
+            .ctx
+            .bot
+            .reply_handle(
+                &Reply::new().content(format!("<@{}> verified {user_mention}", author.id)),
+            )
+            .create_message(self.0.ctx.config.verified_logging_channel_id)
+            .await?;
+
+        self.0
             .handle
             .reply(
                 Reply::new()

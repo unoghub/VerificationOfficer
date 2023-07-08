@@ -14,6 +14,7 @@ Configuration is done using environment variables, `.env` files are supported
 - `VERIFICATION_APPROVALS_CHANNEL_ID`: ID of the channel where the users will be informed that the verification was
   approved
 - `VERIFIED_ROLE_ID`: ID of the role that's given to verified users
+- `VERIFIED_LOGGING_CHANNEL_ID`: ID of the channel where the verified people will be logged
 
 ### Required permissions
 

@@ -137,6 +137,7 @@ struct Config {
     verification_submissions_channel_id: Id<ChannelMarker>,
     verification_approvals_channel_id: Id<ChannelMarker>,
     verified_role_id: Id<RoleMarker>,
+    verified_logging_channel_id: Id<ChannelMarker>,
 }
 
 #[derive(Debug)]
@@ -172,6 +173,7 @@ async fn main() -> Result<(), anyhow::Error> {
         verification_approvals_channel_id: env::var("VERIFICATION_APPROVALS_CHANNEL_ID")?
             .parse()?,
         verified_role_id: env::var("VERIFIED_ROLE_ID")?.parse()?,
+        verified_logging_channel_id: env::var("VERIFIED_LOGGING_CHANNEL_ID")?.parse()?,
     };
 
     let (mut bot, mut shards) = Bot::new(
