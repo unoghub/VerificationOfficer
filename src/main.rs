@@ -104,7 +104,10 @@ use twilight_http as _;
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event, Intents},
-    id::{marker::ChannelMarker, Id},
+    id::{
+        marker::{ChannelMarker, RoleMarker},
+        Id,
+    },
 };
 
 #[derive(Clone, Debug, thiserror::Error)]
@@ -133,6 +136,7 @@ enum CustomError {
 struct Config {
     verification_submissions_channel_id: Id<ChannelMarker>,
     verification_approvals_channel_id: Id<ChannelMarker>,
+    verified_role_id: Id<RoleMarker>,
 }
 
 #[derive(Debug)]
@@ -167,6 +171,7 @@ async fn main() -> Result<(), anyhow::Error> {
             .parse()?,
         verification_approvals_channel_id: env::var("VERIFICATION_APPROVALS_CHANNEL_ID")?
             .parse()?,
+        verified_role_id: env::var("VERIFIED_ROLE_ID")?.parse()?,
     };
 
     let (mut bot, mut shards) = Bot::new(

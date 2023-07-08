@@ -13,6 +13,7 @@ Configuration is done using environment variables, `.env` files are supported
 - `VERIFICATION_SUBMISSIONS_CHANNEL_ID`: ID of the channel where the verification submissions will be sent
 - `VERIFICATION_APPROVALS_CHANNEL_ID`: ID of the channel where the users will be informed that the verification was
   approved
+- `VERIFIED_ROLE_ID`: ID of the role that's given to verified users
 
 ### Required permissions
 
@@ -21,6 +22,7 @@ Configuration is done using environment variables, `.env` files are supported
 > The bot can't verify the server owner
 
 - In the server:
+    - Manage Roles
     - Manage Nicknames
 - In `LOGGING_CHANNEL_ID`:
     - Manage Webhooks

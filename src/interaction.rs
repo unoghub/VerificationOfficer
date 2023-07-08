@@ -26,12 +26,12 @@ impl Context<'_> {
             _ => Err(Error::UnknownInteraction(self.interaction).into()),
         } {
             let user_error = UserError::from_anyhow_err(&err);
-            let is_internal = user_error == UserError::Internal;
+            let is_custom = matches!(user_error, UserError::Custom(_));
             err_handle
                 .report_error(err_reply(&user_error), user_error)
                 .await?;
 
-            if is_internal {
+            if !is_custom {
                 return Err(err);
             }
         }

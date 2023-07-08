@@ -140,25 +140,31 @@ impl Context<'_> {
     }
 
     pub async fn approve(self) -> Result<(), anyhow::Error> {
+        let guild_id = self.0.interaction.guild_id.ok()?;
         let message = self.0.interaction.message.ok()?;
 
         let mut embed_fields = message.embeds.into_iter().next().ok()?.fields.into_iter();
         let user_mention = embed_fields.next().ok()?.value;
+        let user_id = user_mention
+            .strip_prefix("<@")
+            .ok()?
+            .strip_suffix('>')
+            .ok()?
+            .parse()?;
 
         self.0
             .ctx
             .bot
             .http
-            .update_guild_member(
-                self.0.interaction.guild_id.ok()?,
-                user_mention
-                    .strip_prefix("<@")
-                    .ok()?
-                    .strip_suffix('>')
-                    .ok()?
-                    .parse()?,
-            )
+            .update_guild_member(guild_id, user_id)
             .nick(Some(&embed_fields.next().ok()?.value))?
+            .await?;
+
+        self.0
+            .ctx
+            .bot
+            .http
+            .add_guild_member_role(guild_id, user_id, self.0.ctx.config.verified_role_id)
             .await?;
 
         self.0
