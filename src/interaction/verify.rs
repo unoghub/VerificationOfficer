@@ -152,33 +152,38 @@ impl Context<'_> {
             .ok()?
             .parse()?;
 
+        let reason = format!(
+            "Verified by {}{}",
+            self.0
+                .interaction
+                .member
+                .as_ref()
+                .ok()?
+                .nick
+                .as_ref()
+                .unwrap_or(&author.name),
+            if author.discriminator == 0 {
+                String::new()
+            } else {
+                format!("#{}", author.discriminator())
+            }
+        );
+
         self.0
             .ctx
             .bot
             .http
             .update_guild_member(guild_id, user_id)
             .nick(Some(&embed_fields.next().ok()?.value))?
+            .reason(&reason)?
             .await?;
 
-        let mut author_name = self
-            .0
-            .interaction
-            .member
-            .as_ref()
-            .ok()?
-            .nick
-            .clone()
-            .unwrap_or_else(|| author.name.clone());
-        if author.discriminator != 0 {
-            author_name.push('#');
-            author_name.push_str(&author.discriminator().to_string());
-        }
         self.0
             .ctx
             .bot
             .http
             .add_guild_member_role(guild_id, user_id, self.0.ctx.config.verified_role_id)
-            .reason(&format!("Verified by {author_name}"))?
+            .reason(&reason)?
             .await?;
 
         self.0
