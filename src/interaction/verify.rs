@@ -1,6 +1,7 @@
 use sparkle_convenience::{
     error::IntoError, interaction::extract::InteractionDataExt, reply::Reply,
 };
+use twilight_http::request::AuditLogReason;
 use twilight_model::channel::message::{
     component::{ActionRow, Button, ButtonStyle, TextInput, TextInputStyle},
     Component,
@@ -130,10 +131,20 @@ impl Context<'_> {
 
     pub async fn approve(self) -> Result<(), anyhow::Error> {
         let guild_id = self.0.interaction.guild_id.ok()?;
-        let message = self.0.interaction.message.ok()?;
+        let author = self.0.interaction.author().ok()?;
 
-        let mut embed_fields = message.embeds.into_iter().next().ok()?.fields.into_iter();
-        let user_mention = embed_fields.next().ok()?.value;
+        let mut embed_fields = self
+            .0
+            .interaction
+            .message
+            .as_ref()
+            .ok()?
+            .embeds
+            .first()
+            .ok()?
+            .fields
+            .iter();
+        let user_mention = &embed_fields.next().ok()?.value;
         let user_id = user_mention
             .strip_prefix("<@")
             .ok()?
@@ -149,11 +160,25 @@ impl Context<'_> {
             .nick(Some(&embed_fields.next().ok()?.value))?
             .await?;
 
+        let mut author_name = self
+            .0
+            .interaction
+            .member
+            .as_ref()
+            .ok()?
+            .nick
+            .clone()
+            .unwrap_or_else(|| author.name.clone());
+        if author.discriminator != 0 {
+            author_name.push('#');
+            author_name.push_str(&author.discriminator().to_string());
+        }
         self.0
             .ctx
             .bot
             .http
             .add_guild_member_role(guild_id, user_id, self.0.ctx.config.verified_role_id)
+            .reason(&format!("Verified by {author_name}"))?
             .await?;
 
         self.0
