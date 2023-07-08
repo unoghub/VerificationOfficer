@@ -164,7 +164,7 @@ impl Context<'_> {
         self.0
             .ctx
             .bot
-            .reply_handle(&Reply::new().content(format!("{user_mention}, you are verified now!",)))
+            .reply_handle(&Reply::new().content(format!("{user_mention}, you are verified now!")))
             .create_message(self.0.ctx.config.verification_approvals_channel_id)
             .await?;
 
