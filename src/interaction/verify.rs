@@ -261,11 +261,11 @@ fn name_sanitized(name: &str) -> Result<String, anyhow::Error> {
 mod tests {
     #[test]
     fn name_sanitized() -> Result<(), anyhow::Error> {
-        assert_eq!(super::name_sanitized("aaa bBb")?, "Aaa Bbb Ccc");
-        assert_eq!(super::name_sanitized("a")?, "A B");
-        assert_eq!(super::name_sanitized("a  b")?, "A B C");
-        assert_eq!(super::name_sanitized("iiı")?, "İiı İiı");
-        assert_eq!(super::name_sanitized("ıiı")?, "Iiı Iiı");
+        assert_eq!(super::name_sanitized("aaa bBb ccc")?, "Aaa Bbb Ccc");
+        assert_eq!(super::name_sanitized("a B")?, "A B");
+        assert_eq!(super::name_sanitized("a  b  c ")?, "A B C");
+        assert_eq!(super::name_sanitized("iiı İiı")?, "İiı İiı");
+        assert_eq!(super::name_sanitized("ıiı Iiı")?, "Iiı Iiı");
 
         Ok(())
     }
