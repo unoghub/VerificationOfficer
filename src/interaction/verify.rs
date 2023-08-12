@@ -155,7 +155,7 @@ impl Context<'_> {
 
     pub async fn approve(self) -> Result<(), anyhow::Error> {
         let guild_id = self.0.interaction.guild_id.ok()?;
-        let author_id = self.0.interaction.author().ok()?.id;
+        let author = self.0.interaction.author().ok()?.clone();
 
         let mut embed_fields = self
             .0
@@ -185,7 +185,7 @@ impl Context<'_> {
             .ok()?
             .value;
 
-        let reason = format!("{verified_user_mention}, <@{author_id}> tarafından doğrulandı.");
+        let reason = format!("{} tarafından doğrulandı", author.name);
 
         self.0
             .ctx
@@ -208,7 +208,14 @@ impl Context<'_> {
             .reason(&reason)?
             .await?;
 
-        let reason_reply = Reply::new().embed(EmbedBuilder::new().description(reason).build());
+        let reason_reply = Reply::new().embed(
+            EmbedBuilder::new()
+                .description(format!(
+                    "{verified_user_mention}, <@{}> tarafından doğrulandı.",
+                    author.id
+                ))
+                .build(),
+        );
 
         self.0
             .ctx
