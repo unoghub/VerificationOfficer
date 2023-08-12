@@ -1,5 +1,6 @@
 use std::{env, ops::ControlFlow};
 
+use sparkle_convenience::reply::Reply;
 use twilight_model::{
     channel::message::{
         component::{ActionRow, Button, ButtonStyle},
@@ -7,6 +8,7 @@ use twilight_model::{
     },
     id::{marker::ChannelMarker, Id},
 };
+use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::{interaction, Error};
 
@@ -42,19 +44,26 @@ impl Context<'_> {
     ) -> Result<(), anyhow::Error> {
         self.0
             .bot
-            .http
+            .reply_handle(
+                &Reply::new()
+                    .embed(
+                        EmbedBuilder::new()
+                            .title("Doğrulama Formu")
+                            .description("Doğrulanmak için aşağıdaki butona basın")
+                            .build(),
+                    )
+                    .component(Component::ActionRow(ActionRow {
+                        components: vec![Component::Button(Button {
+                            custom_id: Some(interaction::verify::MODAL_OPEN_ID.to_owned()),
+                            label: Some("Doğrulama Formunu Aç".to_owned()),
+                            style: ButtonStyle::Primary,
+                            disabled: false,
+                            emoji: None,
+                            url: None,
+                        })],
+                    })),
+            )
             .create_message(channel_id)
-            .content("Please click the button below to open the verification form:")?
-            .components(&[Component::ActionRow(ActionRow {
-                components: vec![Component::Button(Button {
-                    custom_id: Some(interaction::verify::MODAL_OPEN_ID.to_owned()),
-                    label: Some("Verify".to_owned()),
-                    style: ButtonStyle::Primary,
-                    disabled: false,
-                    emoji: None,
-                    url: None,
-                })],
-            })])?
             .await?;
 
         Ok(())

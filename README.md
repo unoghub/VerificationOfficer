@@ -27,7 +27,7 @@ Configuration is done using environment variables, `.env` files are supported
     - Manage Nicknames
 - In `LOGGING_CHANNEL_ID`:
     - Manage Webhooks
-- In `VERIFICATION_SUBMISSIONS_CHANNEL_ID` and `VERIFICATION_APPROVALS_CHANNEL_ID`:
+- In `VERIFICATION_SUBMISSIONS_CHANNEL_ID`, `VERIFICATION_APPROVALS_CHANNEL_ID` and `VERIFIED_LOGGING_CHANNEL_ID`:
     - View Channel
     - Send Messages
 
@@ -41,9 +41,12 @@ These are one-off operations, start the executable without a command to run the 
 Permissions listed as required under the commands aren't required after the command has run
 
 - `create_verification_message {channel_id}`: Sends the verification message in the given channel ID
-    - Required permissions in `channel_id`:
+    - Required permissions
+    - In `channel_id`:
         - View Channel
         - Send Messages
+    - In `LOGGING_CHANNEL_ID`:
+        - Manage Webhooks
 
 ## Compilation
 

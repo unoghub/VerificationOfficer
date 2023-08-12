@@ -98,9 +98,12 @@ mod interaction;
 use std::{env, ops::ControlFlow, sync::Arc};
 
 use futures::StreamExt;
-use sparkle_convenience::{error::UserError, reply::Reply, Bot};
+use sparkle_convenience::{
+    error::{NoCustomError, UserError},
+    reply::Reply,
+    Bot,
+};
 use twilight_gateway::EventTypeFlags;
-use twilight_http as _;
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event, Intents},
@@ -109,6 +112,7 @@ use twilight_model::{
         Id,
     },
 };
+use twilight_util::builder::embed::EmbedBuilder;
 
 #[derive(Clone, Debug, thiserror::Error)]
 enum Error {
@@ -120,16 +124,6 @@ enum Error {
     UnknownEvent(Event),
     #[error("unknown interaction: {0:#?}")]
     UnknownInteraction(Interaction),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
-enum CustomError {
-    #[error(
-        "Your name *{0}* is over {} characters, consider using abbreviations or omitting your \
-         middle name.",
-        twilight_validate::request::NICKNAME_LIMIT_MAX
-    )]
-    InvalidName(String),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -219,14 +213,15 @@ async fn main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn err_reply(err: &UserError<CustomError>) -> Reply {
+fn err_reply(_: &UserError<NoCustomError>) -> Reply {
     Reply::new()
-        .content(if let UserError::Custom(custom_err) = err {
-            custom_err.to_string()
-        } else {
-            "Something went wrong, I reported the error to the developers, hopefully it'll be \
-             fixed soon. Sorry about the inconvenience."
-                .to_owned()
-        })
+        .embed(
+            EmbedBuilder::new()
+                .description(
+                    "Bir şeyler ters gitti, sorunu geliştiricelere ilettim, yakında \
+                     çözeceklerdir. Verdiğimiz rahatsızlık için özür dileriz.",
+                )
+                .build(),
+        )
         .ephemeral()
 }
